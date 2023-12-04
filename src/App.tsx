@@ -6,14 +6,17 @@ import './styles.css';
 
 function SubmitProject() {
   const [username, setUsername] = useState('');
-  const [gameLink, setGameLink] = useState('');
-  const [result, setResult] = useState<boolean | null>(null);
+  const [repoName, setRepoName] = useState('');
+  const [result, setResult] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/check-game', { username, gameLink });
-      setResult(response.data);
+      const response = await axios.post('http://localhost:5000/api/users', {
+        name: username,
+        repoLink: repoName,
+      });
+      setResult('Successfully added project');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -36,57 +39,64 @@ function SubmitProject() {
           Project Name:
           <input
             type="text"
-            value={gameLink}
-            onChange={(e) => setGameLink(e.target.value)}
+            value={repoName}
+            onChange={(e) => setRepoName(e.target.value)}
             placeholder="Paste the name of your Github project"
           />
         </label>
-        <button type="submit" >
-          Submit Project
-        </button>
+        <button type="submit">Submit Project</button>
       </form>
-      {result !== null && (
-        <p>Your project has been submitted successfully: {result.toString()}</p>
-      )}
+      {result !== null && <p>{result}</p>}
     </HeaderFooter>
   );
 }
 
 function ConsultProjects() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
   const handleSearchByName = async () => {
-    // Realiza la búsqueda por nombre utilizando el valor de searchTerm
     try {
-      const response = await axios.get(`/search-by-name?term=${searchTerm}`);
-      console.log('Projects found:', response.data);
+      const response = await axios.get(`http://localhost:5000/api/users/${searchTerm}/my-repos`);
+      setSearchResults(response.data);
     } catch (error) {
       console.error('Error searching projects:', error);
     }
   };
 
   const handleSearchAll = async () => {
-    // Realiza la búsqueda de todos los proyectos
     try {
-      const response = await axios.get('/search-all-projects');
-      console.log('All projects:', response.data);
+      const response = await axios.get('http://localhost:5000/api/my-repos');
+      setSearchResults(response.data);
     } catch (error) {
       console.error('Error searching all projects:', error);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Puedes realizar acciones adicionales aquí si es necesario
-    // Llamamos a la función de búsqueda por nombre al enviar el formulario
-    handleSearchByName();
+  const handleDownloadRepo = async (username, repoName) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/repos/${username}/${repoName}/download`, {
+        responseType: 'blob',  // Indica que la respuesta es un archivo binario
+      });
+
+      // Crea un objeto URL para el blob y crea un enlace de descarga
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${repoName}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error(`Error downloading repository ${repoName} for user ${username}:`, error);
+    }
   };
 
   return (
     <HeaderFooter>
       <div className="Home">
         <h2>Consult Projects</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => e.preventDefault()}>
           <label>
             Project Name:
             <input
@@ -96,19 +106,32 @@ function ConsultProjects() {
               placeholder="Enter project name"
             />
           </label>
-          <button type="submit" >
-            Search Projects by Name
-          </button>
+          <button onClick={handleSearchByName}>Search Projects by Name</button>
         </form>
-        <form onSubmit={handleSearchAll}>
-          <button onClick={handleSearchAll}>
-            Search All Projects
-          </button>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <button onClick={handleSearchAll}>Search All Projects</button>
         </form>
+        {searchResults.length > 0 && (
+          <div>
+            <h3>Search Results:</h3>
+            <ul>
+              {searchResults.map((project, index) => (
+                <li key={index}>
+                  {project.name} - {project.repoLink} - {project.hasDockerfile ? 'Has Dockerfile' : 'No Dockerfile'}
+                  <button onClick={() => handleDownloadRepo(project.name, project.repoLink)}>
+                    Download Repo
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </HeaderFooter>
   );
 }
+
+
 
 function Home() {
   return (
