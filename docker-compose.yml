@@ -1,0 +1,28 @@
+version: '3'
+services:
+  # MongoDB container
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  # Express.js container
+  express-app:
+    build:
+      context: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: "mongodb://root:example@mongodb:27017/mydatabase"
+  
+  frontend:
+    image: sanrocks12/arep-finalproject:front
+    ports:
+      - "80:3000"
+    depends_on:
+      - express-app

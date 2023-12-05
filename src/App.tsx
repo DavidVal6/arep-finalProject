@@ -117,7 +117,7 @@ function ConsultProjects() {
             <ul>
               {searchResults.map((project, index) => (
                 <li key={index}>
-                  {project.name} - {project.repoLink} - {project.hasDockerfile ? 'Has Dockerfile' : 'No Dockerfile'}
+                  {project.name} - {project.repoLink}
                   <button onClick={() => handleDownloadRepo(project.name, project.repoLink)}>
                     Download Repo
                   </button>

@@ -1,23 +1,29 @@
-# Usa la imagen oficial de Node como base
-FROM node:18
+# Use an official Node.js runtime as a parent image
+FROM node:18 as build
 
-# Establece el directorio de trabajo en /usr/src/app
+# Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copia los archivos package.json y package-lock.json
+# Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-# Instala las dependencias
+# Install app dependencies
 RUN npm install
 
-# Copia el resto de la aplicación
+# Copy the rest of the application code to the working directory
 COPY . .
 
-# Construye la aplicación para producción
+# Build the React app
 RUN npm run build
 
-# Expone el puerto 3000 en el contenedor
-EXPOSE 3000
+# Use Nginx as a lightweight web server to serve the built React app
+FROM nginx:alpine
 
-# Comando para ejecutar la aplicación
-CMD ["npm", "start"]
+# Copy the built React app from the build image to the Nginx web root directory
+COPY --from=build /usr/src/app/build /usr/share/nginx/html
+
+# Expose the port on which Nginx will run
+EXPOSE 80
+
+# Define the command to run Nginx
+CMD ["nginx", "-g", "daemon off;"]
