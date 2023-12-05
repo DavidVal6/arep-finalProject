@@ -1,5 +1,5 @@
 # Usa la imagen oficial de Node como base
-FROM node:18
+FROM node:21.1-bookworm-slim
 
 # Establece el directorio de trabajo en /usr/src/app
 WORKDIR /usr/src/app
