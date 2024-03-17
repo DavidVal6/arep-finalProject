@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Use Nginx as a lightweight web server to serve the built React app
-FROM nginx:alpine
+FROM nginx:1.25.4-alpine3.18
 
 # Copy the built React app from the build image to the Nginx web root directory
 COPY --from=build /usr/src/app/build /usr/share/nginx/html
